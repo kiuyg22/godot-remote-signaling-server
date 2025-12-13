@@ -1,52 +1,92 @@
 import asyncio
 import websockets
 import json
-import secrets
-import os
 
-PORT = int(os.environ.get("PORT", 10000))
-clients = {}  # id → websocket
+# id -> websocket
+clients = {}
 
 
 async def handler(ws):
-    client_id = secrets.token_hex(4)
-    clients[client_id] = ws
+    my_id = None
 
-    await ws.send(json.dumps({
-        "type": "welcome",
-        "id": client_id
-    }))
-
-    print(f"[+] Client connected: {client_id}")
+    print("[+] New connection")
 
     try:
         async for message in ws:
-            print("[>] recv:", message)
-            msg = json.loads(message)
+            print("[>] Received:", message)
 
+            try:
+                msg = json.loads(message)
+            except json.JSONDecodeError:
+                print("[!] Invalid JSON")
+                continue
+
+            msg_type = msg.get("type")
+
+            # -----------------------------
+            # REGISTER (client chooses ID)
+            # -----------------------------
+            if msg_type == "register":
+                requested_id = msg.get("id")
+
+                if not requested_id:
+                    await ws.send(json.dumps({
+                        "type": "error",
+                        "reason": "ID required"
+                    }))
+                    continue
+
+                if requested_id in clients:
+                    await ws.send(json.dumps({
+                        "type": "error",
+                        "reason": "ID already in use"
+                    }))
+                    continue
+
+                my_id = requested_id
+                clients[my_id] = ws
+
+                await ws.send(json.dumps({
+                    "type": "registered",
+                    "id": my_id
+                }))
+
+                print(f"[+] Registered client as {my_id}")
+                continue
+
+            # -----------------------------
+            # FORWARD SIGNALING MESSAGES
+            # -----------------------------
             target = msg.get("to")
-            if target in clients:
-                try:
-                    await clients[target].send(json.dumps(msg))
-                    print(f"[<] Forwarded to {target}")
-                except:
-                    pass
+            if not target:
+                print("[!] No target in message")
+                continue
 
-    except:
+            target_ws = clients.get(target)
+            if not target_ws:
+                print(f"[!] Target not found: {target}")
+                continue
+
+            try:
+                await target_ws.send(json.dumps(msg))
+                print(f"[<] Forwarded {msg_type} → {target}")
+            except:
+                print(f"[!] Failed to forward to {target}")
+
+    except websockets.exceptions.ConnectionClosed:
         pass
 
-    print(f"[-] Client disconnected: {client_id}")
-    del clients[client_id]
+    finally:
+        if my_id and my_id in clients:
+            del clients[my_id]
+            print(f"[-] Client disconnected: {my_id}")
 
 
 async def main():
-    print(f"Signaling server active on port {PORT}")
-    async with websockets.serve(
-        handler, 
-        "0.0.0.0", 
-        PORT
-    ):
-        await asyncio.Future()
+    print("Signaling server running on ws://0.0.0.0:8080")
+    async with websockets.serve(handler, "0.0.0.0", 8080):
+        await asyncio.Future()  # run forever
+
 
 if __name__ == "__main__":
     asyncio.run(main())
