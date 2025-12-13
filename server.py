@@ -5,7 +5,6 @@ import json
 clients = {}    # client_id -> websocket
 sockets = {}    # websocket -> client_id
 
-
 async def handler(ws):
     print("[+] New connection")
 
@@ -27,7 +26,6 @@ async def handler(ws):
             # 1️⃣ REGISTER
             if msg_type == "register":
                 client_id = msg.get("id")
-
                 if not client_id:
                     await ws.send(json.dumps({
                         "type": "error",
@@ -43,11 +41,11 @@ async def handler(ws):
 
                 clients[client_id] = ws
                 sockets[ws] = client_id
-
                 print(f"[+] Registered: {client_id}")
 
+                # ✅ Send a proper 'registered' confirmation
                 await ws.send(json.dumps({
-                    "type": "welcome",
+                    "type": "registered",
                     "id": client_id
                 }))
                 continue
@@ -69,7 +67,6 @@ async def handler(ws):
 
             # 3️⃣ FORWARD
             target_ws = clients.get(target_id)
-
             if target_ws:
                 await target_ws.send(json.dumps(msg))
                 print(f"[<] {msg_type} {sender_id} → {target_id}")
