@@ -15,10 +15,7 @@ async def handler(ws):
             try:
                 msg = json.loads(raw)
             except json.JSONDecodeError:
-                await ws.send(json.dumps({
-                    "type": "error",
-                    "msg": "Invalid JSON"
-                }))
+                await ws.send(json.dumps({"type": "error", "msg": "Invalid JSON"}))
                 continue
 
             msg_type = msg.get("type")
@@ -27,10 +24,7 @@ async def handler(ws):
             if msg_type == "register":
                 client_id = msg.get("id")
                 if not client_id:
-                    await ws.send(json.dumps({
-                        "type": "error",
-                        "msg": "Missing id"
-                    }))
+                    await ws.send(json.dumps({"type": "error", "msg": "Missing id"}))
                     continue
 
                 # Kick old connection if ID already exists
@@ -43,24 +37,17 @@ async def handler(ws):
                 sockets[ws] = client_id
                 print(f"[+] Registered: {client_id}")
 
-                # ✅ Send a proper 'registered' confirmation
-                await ws.send(json.dumps({
-                    "type": "registered",
-                    "id": client_id
-                }))
+                # ✅ Send proper 'registered' message
+                await ws.send(json.dumps({"type": "registered", "id": client_id}))
                 continue
 
             # 2️⃣ MUST BE REGISTERED
             if ws not in sockets:
-                await ws.send(json.dumps({
-                    "type": "error",
-                    "msg": "Not registered"
-                }))
+                await ws.send(json.dumps({"type": "error", "msg": "Not registered"}))
                 continue
 
             sender_id = sockets[ws]
             target_id = msg.get("to")
-
             if not target_id:
                 print("[!] Missing target")
                 continue
@@ -86,7 +73,6 @@ async def handler(ws):
         if cid in clients and clients[cid] == ws:
             del clients[cid]
 
-
 async def main():
     print("🚀 Signaling server running on ws://0.0.0.0:10000")
     async with websockets.serve(
@@ -98,7 +84,6 @@ async def main():
         max_size=2**20,
     ):
         await asyncio.Future()  # run forever
-
 
 if __name__ == "__main__":
     asyncio.run(main())
