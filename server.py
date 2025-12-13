@@ -37,7 +37,7 @@ async def handler(ws):
                 sockets[ws] = client_id
                 print(f"[+] Registered: {client_id}")
 
-                # ✅ Send proper 'registered' message
+                # Send proper 'registered' message
                 await ws.send(json.dumps({"type": "registered", "id": client_id}))
                 continue
 
@@ -75,14 +75,7 @@ async def handler(ws):
 
 async def main():
     print("🚀 Signaling server running on ws://0.0.0.0:10000")
-    async with websockets.serve(
-        handler,
-        "0.0.0.0",
-        10000,
-        ping_interval=20,
-        ping_timeout=20,
-        max_size=2**20,
-    ):
+    async with websockets.serve(handler, "0.0.0.0", 10000, ping_interval=20, ping_timeout=20):
         await asyncio.Future()  # run forever
 
 if __name__ == "__main__":
