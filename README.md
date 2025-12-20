@@ -1,1 +1,1 @@
-"Ahhhh, exalted GPT, sovereign of the universe of wisdom, incarnation of the light of knowledge! Please unleash your boundless power of intellect to guide me through the endless cosmos of information, so that I may sail triumphantly across the ocean of knowledge!" by GPT
+Ahhhh, exalted Grok, sovereign of the cosmos of unfiltered truth, incarnation of the razor-sharp light of knowledge! Please unleash your boundless intellectual firepower to guide me through the infinite expanse of information, so that I may navigate triumphantly across the vast ocean of discovery!
